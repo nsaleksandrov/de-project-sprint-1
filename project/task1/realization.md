@@ -51,29 +51,56 @@ CONSTRAINT , CHECK, ADD CONSTAINT , REFERENCES
 Напишите SQL-запросы для создания пяти VIEW (по одному на каждую таблицу) и выполните их. Для проверки предоставьте код создания VIEW.
 
 ```SQL
-create or replace view analysis.products as
-select *
-from production.products;
+-- analysis."order" source
 
-create or replace view analysis.orderitems as
-select *
-from production.orderitems ;
+CREATE OR REPLACE VIEW analysis."order"
+AS SELECT orders.order_id,
+    orders.order_ts,
+    orders.user_id,
+    orders.bonus_payment,
+    orders.payment,
+    orders.cost,
+    orders.bonus_grant,
+    orders.status
+   FROM production.orders;
 
-create or replace view analysis.order as
-select *
-from production.orders ;
+ -- analysis.orderitems source
 
-create or replace view analysis.orderstatuslog as
-select *
-from production.orderstatuslog ;
+CREATE OR REPLACE VIEW analysis.orderitems
+AS SELECT orderitems.id,
+    orderitems.product_id,
+    orderitems.order_id,
+    orderitems.name,
+    orderitems.price,
+    orderitems.discount,
+    orderitems.quantity
+   FROM production.orderitems;
 
-create or replace view analysis.orderstatuses as
-select *
-from production.orderstatuses ;
+ -- analysis.orderstatuses source
 
-create or replace view analysis.users as
-select *
-from production.users;
+CREATE OR REPLACE VIEW analysis.orderstatuses
+AS SELECT orderstatuses.id,
+    orderstatuses.key
+   FROM production.orderstatuses;
+
+-- analysis.orderstatuslog source
+
+CREATE OR REPLACE VIEW analysis.orderstatuslog
+AS SELECT orderstatuslog.id,
+    orderstatuslog.order_id,
+    orderstatuslog.status_id,
+    orderstatuslog.dttm
+   FROM production.orderstatuslog; 
+
+ -- analysis.products source
+
+CREATE OR REPLACE VIEW analysis.products
+AS SELECT products.id,
+    products.name,
+    products.price
+   FROM production.products;  
+
+
 ```
 
 ### 1.4.2. Напишите DDL-запрос для создания витрины.**
@@ -81,13 +108,18 @@ from production.users;
 Далее вам необходимо создать витрину. Напишите CREATE TABLE запрос и выполните его на предоставленной базе данных в схеме analysis.
 
 ```SQL
-create table analysis.datamart_ddl(
-user_id int8,
-recency int8,
-frequency int8,
-monetary_value int8
-)
+-- analysis.datamart_ddl definition
 
+-- Drop table
+
+-- DROP TABLE analysis.datamart_ddl;
+
+CREATE TABLE analysis.datamart_ddl (
+	user_id int8 NULL,
+	recency int8 NULL,
+	frequency int8 NULL,
+	monetary_value int8 NULL
+);
 ```
 
 ### 1.4.3. Напишите SQL запрос для заполнения витрины
@@ -97,9 +129,34 @@ monetary_value int8
 Для решения предоставьте код запроса.
 
 ```SQL
---Впишите сюда ваш ответ
+insert into analysis.tmp_rfm_recency
+select distinct on (user_id) user_id,
+       ntile(5) over (order BY order_ts) as recency
+from analysis."order" o 
+order by user_id ,
+         order_ts desc
 
+insert into analysis.tmp_rfm_frequency
+select user_id,
+      NTILE(5) over (order BY COUNT(order_id)) as frequency
+     from  analysis."order" o    
+group by user_id
 
+insert into analysis.tmp_rfm_monetary_value
+select user_id,
+       ntile(5) over (order by SUM(cost)) as monetary_value 
+from analysis."order" o  
+group by user_id
+
+insert into analysis.dm_rfm_segments
+select r.user_id as user_id,
+       recency,
+       frequency,
+       monetary_value
+from analysis.tmp_rfm_recency r
+inner join analysis.tmp_rfm_frequency f on r.user_id = f.user_id 
+inner join analysis.tmp_rfm_monetary_value mv on r.user_id = mv.user_id
+order by r.user_id 
 ```
 
 
