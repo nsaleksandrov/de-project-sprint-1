@@ -1,4 +1,4 @@
-create or replace view  analysis.orders_view as
+create or replace view  analysis.order as
 select o.order_id ,
        o.order_ts,
        o.user_id ,
