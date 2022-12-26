@@ -9,9 +9,11 @@ group by user_id
 )
 
 insert into analysis.tmp_rfm_recency
-SELECT o.user_id as user_id,
+SELECT u.user_id as user_id,
        recency
-FROM analysis."order" o 
+FROM analysis."users" u
 LEFT JOIN tmp_rfm_recency trr
-ON o.user_id = trr.user_id
-WHERE o.order_ts >= '2022-01-01'
+ON u.user_id = trr.user_id
+WHERE u.user_id IN (SELECT DISTINCT user_id
+                    FROM analysis."order" o
+                    WHERE o.order_ts >='2022-01-01')
