@@ -7,11 +7,14 @@ AND   o.order_ts >= '2022-01-01'
 group by user_id)
 
 INSERT INTO analysis.tmp_rfm_frequency
-SELECT u.user_id as user_id,
+SELECT u.id as user_id,
        frequency
 FROM analysis."users" u 
 LEFT JOIN tmp_rfm_frequency trf
-ON u.user_id = trf.user_id
-WHERE u.user_id IN (SELECT DISTINCT user_id
+ON u.id = trf.user_id
+WHERE u.id IN (SELECT DISTINCT user_id
                     FROM analysis."order" o
                     WHERE o.order_ts >='2022-01-01')
+
+
+
