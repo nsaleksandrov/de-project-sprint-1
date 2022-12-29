@@ -1,7 +1,7 @@
 WITH tmp_rfm_frequency AS ( 
 select user_id ,
        COUNT(order_id) as cnt_order
-     from  analysis.'order' o 
+     from  analysis."order" o 
 WHERE o.status = 4 --closed 
 AND   o.order_ts >= '2022-01-01'     
 group by user_id
