@@ -10,7 +10,7 @@ group by user_id
 
 INSERT INTO analysis.tmp_rfm_frequency 
 SELECT u.id as user_id, 
-        NTILE(5) over (order BY cnt_orders) as frequency
+        NTILE(5) over (order BY cnt_orders NULLS FIRST) as frequency
 FROM analysis."users" u  
 LEFT JOIN tmp_rfm_frequency trf 
 ON u.id = trf.user_id 
